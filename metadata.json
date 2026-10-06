@@ -1,0 +1,6 @@
+{
+  "name": "Recording Transcription Dashboard",
+  "description": "Production-ready recording transcription dashboard connected to Cloudflare Worker R2 audio storage and Supabase metadata index.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
