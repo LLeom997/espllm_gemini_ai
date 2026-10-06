@@ -16,6 +16,7 @@ import { TranscriptViewer } from './transcript-viewer';
 import { SupabaseModal } from './supabase-modal';
 import { AISettingsModal } from './ai-settings-modal';
 import { DailyAnalysis } from './daily-analysis';
+import { safeJsonParse } from '../lib/utils/api';
 import {
   Sparkles,
   Database,
@@ -81,15 +82,12 @@ export const Dashboard: React.FC = () => {
   const fetchRecordings = useCallback(async () => {
     try {
       const res = await fetch('/api/recordings');
-      if (!res.ok) {
-        throw new Error(`Failed to load recordings: ${res.statusText}`);
-      }
-      const data = await res.json();
-      if (Array.isArray(data.recordings)) {
+      const data = await safeJsonParse<{ recordings?: Recording[] }>(res);
+      if (Array.isArray(data?.recordings)) {
         setRecordings(data.recordings);
       }
     } catch (err: any) {
-      console.error('Error fetching recordings:', err);
+      console.warn('Error fetching recordings:', err);
       addToast('error', 'Database Error', err.message || 'Unable to load recordings from database.');
     }
   }, [addToast]);
@@ -99,8 +97,10 @@ export const Dashboard: React.FC = () => {
     try {
       const res = await fetch('/api/health');
       if (res.ok) {
-        const data = await res.json();
-        setSupabaseStatus(data.supabase);
+        const data = await safeJsonParse<any>(res);
+        if (data?.supabase) {
+          setSupabaseStatus(data.supabase);
+        }
       }
     } catch (err) {
       console.warn('Health check unavailable:', err);
@@ -116,13 +116,13 @@ export const Dashboard: React.FC = () => {
 
       try {
         const res = await fetch('/api/sync', { method: 'POST' });
+        const data = await safeJsonParse<any>(res);
+
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || `Worker sync failed with HTTP ${res.status}`);
+          throw new Error(data?.error || `Worker sync failed with HTTP ${res.status}`);
         }
 
-        const data = await res.json();
-        if (data.recordings && Array.isArray(data.recordings)) {
+        if (data?.recordings && Array.isArray(data.recordings)) {
           setRecordings(data.recordings);
           setLastSyncTime(new Date());
           setSyncSuccess(true);
@@ -196,12 +196,11 @@ export const Dashboard: React.FC = () => {
         body: JSON.stringify({ filename: recordingKey }),
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Server returned ${res.status}`);
-      }
+      const data = await safeJsonParse<any>(res);
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || `Server returned HTTP ${res.status}`);
+      }
 
       if (data.recording) {
         // Update row with completed status and transcript
@@ -212,7 +211,7 @@ export const Dashboard: React.FC = () => {
         addToast(
           'success',
           'Transcription Completed',
-          `Successfully transcribed ${recordingKey}. Transcript saved to Supabase.`
+          `Successfully transcribed ${recordingKey}. Transcript saved.`
         );
       }
     } catch (err: any) {

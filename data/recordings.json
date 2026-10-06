@@ -4,13 +4,15 @@
     "recording_key": "Recording%20(20).m4a",
     "file_size": 410011,
     "uploaded_at": "2026-10-04T18:06:33.118Z",
-    "transcription_status": "pending",
-    "transcript": null,
-    "transcript_key": null,
-    "transcribed_at": null,
+    "transcription_status": "completed",
+    "transcript": "Hello there. Good morning. This is Maitreya. We are going to look into the latest podcast by Raj Shamani where he has enlisted discussions topics with Miss Pooja Makhija.",
+    "transcript_key": "Recording%20(20).m4a.txt",
+    "transcribed_at": "2026-10-06T18:13:13.163Z",
     "created_at": "2026-10-06T13:16:24.551Z",
-    "updated_at": "2026-10-06T13:16:24.551Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:13.163Z",
+    "error_message": null,
+    "recording_name": "Recording%20(20).m4a",
+    "transcript_preview": "Hello there. Good morning. This is Maitreya. We are going to look into the latest podcast by Raj Shamani where he has enlisted discussions topics with Miss Pooja Makhija."
   },
   {
     "id": "d5f9376c-04d7-450a-8d3c-5644adb6321e",
@@ -22,8 +24,10 @@
     "transcript_key": "REC0015.WAV.txt",
     "transcribed_at": "2026-10-06T13:16:25.255Z",
     "created_at": "2026-10-06T13:16:24.551Z",
-    "updated_at": "2026-10-06T13:16:25.255Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.621Z",
+    "error_message": null,
+    "recording_name": "REC0015.WAV",
+    "transcript_preview": "Hello there, this is Maitreya Gokhale speaking. Today is 4th of October, 2026 and right now it's 11.50 PM."
   },
   {
     "id": "d1f6ef97-6715-4938-bbc5-df234b89a350",
@@ -35,8 +39,10 @@
     "transcript_key": "REC0016.WAV.txt",
     "transcribed_at": "2026-10-06T13:16:39.262Z",
     "created_at": "2026-10-06T13:16:24.552Z",
-    "updated_at": "2026-10-06T13:16:39.262Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.621Z",
+    "error_message": null,
+    "recording_name": "REC0016.WAV",
+    "transcript_preview": "there we are going to record as many 10 seconds as many possible we are going to check if we are able to access our files from the R2 on the cloudflare"
   },
   {
     "id": "a48de65c-32db-43c6-a8e3-4471ff903b56",
@@ -48,8 +54,10 @@
     "transcript_key": null,
     "transcribed_at": null,
     "created_at": "2026-10-06T13:16:24.553Z",
-    "updated_at": "2026-10-06T13:16:24.553Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.621Z",
+    "error_message": null,
+    "recording_name": "REC0017.WAV",
+    "transcript_preview": null
   },
   {
     "id": "533decf5-5f56-4383-9299-9792e2f36eaf",
@@ -61,8 +69,10 @@
     "transcript_key": null,
     "transcribed_at": null,
     "created_at": "2026-10-06T13:16:24.553Z",
-    "updated_at": "2026-10-06T13:16:24.553Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.622Z",
+    "error_message": null,
+    "recording_name": "REC0018.WAV",
+    "transcript_preview": null
   },
   {
     "id": "eab0c4ad-3dd3-48e1-80dc-dd50b8cb06ad",
@@ -74,8 +84,10 @@
     "transcript_key": null,
     "transcribed_at": null,
     "created_at": "2026-10-06T13:16:24.553Z",
-    "updated_at": "2026-10-06T13:16:24.553Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.622Z",
+    "error_message": null,
+    "recording_name": "REC0019.WAV",
+    "transcript_preview": null
   },
   {
     "id": "bd924b70-d107-4427-9361-88bfd06245b8",
@@ -87,8 +99,10 @@
     "transcript_key": "REC0020.WAV.txt",
     "transcribed_at": "2026-10-06T13:16:26.083Z",
     "created_at": "2026-10-06T13:16:24.554Z",
-    "updated_at": "2026-10-06T13:16:26.083Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.622Z",
+    "error_message": null,
+    "recording_name": "REC0020.WAV",
+    "transcript_preview": "Thank you for watching!"
   },
   {
     "id": "7c39378a-6b12-4f9d-a7cf-07bf22500cd2",
@@ -100,8 +114,10 @@
     "transcript_key": "REC0021.WAV.txt",
     "transcribed_at": "2026-10-06T13:16:26.944Z",
     "created_at": "2026-10-06T13:16:24.554Z",
-    "updated_at": "2026-10-06T13:16:26.944Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.623Z",
+    "error_message": null,
+    "recording_name": "REC0021.WAV",
+    "transcript_preview": "Thank you for watching!"
   },
   {
     "id": "cbeafc29-5143-47bc-9176-80ae18215ca4",
@@ -113,8 +129,10 @@
     "transcript_key": null,
     "transcribed_at": null,
     "created_at": "2026-10-06T13:16:24.554Z",
-    "updated_at": "2026-10-06T13:16:24.554Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.623Z",
+    "error_message": null,
+    "recording_name": "REC0022.WAV",
+    "transcript_preview": null
   },
   {
     "id": "248d4dca-22de-4ee8-a5c8-50250bd6a0c8",
@@ -126,8 +144,10 @@
     "transcript_key": "REC0024.WAV.txt",
     "transcribed_at": "2026-10-06T13:16:27.801Z",
     "created_at": "2026-10-06T13:16:24.554Z",
-    "updated_at": "2026-10-06T13:16:27.801Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.623Z",
+    "error_message": null,
+    "recording_name": "REC0024.WAV",
+    "transcript_preview": "ಶಮನ ನಹೀಯಿಂದ ನಾರಗಾರಕೇ ಸಕ್ಕೆದ್ದರಾನೀನ. ಬಗದದನವರ Stage ರಾಧಿಕ"
   },
   {
     "id": "348f1a0d-519f-4710-a7ee-c57b0d6fbcb4",
@@ -139,8 +159,10 @@
     "transcript_key": null,
     "transcribed_at": null,
     "created_at": "2026-10-06T13:16:24.555Z",
-    "updated_at": "2026-10-06T13:16:24.555Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.624Z",
+    "error_message": null,
+    "recording_name": "REC0025.WAV",
+    "transcript_preview": null
   },
   {
     "id": "b066e36e-4eb9-4d7e-b29b-7c781f1b9c1b",
@@ -152,8 +174,10 @@
     "transcript_key": null,
     "transcribed_at": null,
     "created_at": "2026-10-06T13:16:24.555Z",
-    "updated_at": "2026-10-06T13:16:24.555Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.624Z",
+    "error_message": null,
+    "recording_name": "REC0026.WAV",
+    "transcript_preview": null
   },
   {
     "id": "57d4e715-5d9b-48e8-80d0-e0dac7eb1cdd",
@@ -165,8 +189,10 @@
     "transcript_key": "REC0027.WAV.txt",
     "transcribed_at": "2026-10-06T13:16:28.677Z",
     "created_at": "2026-10-06T13:16:24.555Z",
-    "updated_at": "2026-10-06T13:16:28.677Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.624Z",
+    "error_message": null,
+    "recording_name": "REC0027.WAV",
+    "transcript_preview": "how it sounds like this is 1, 2, 3, 1, 2, 3, mic check, mic check, mic check we are checking audio number 27"
   },
   {
     "id": "187f5dc4-e98c-474e-ad6f-4199f86fac91",
@@ -178,20 +204,39 @@
     "transcript_key": "REC0028.WAV.txt",
     "transcribed_at": "2026-10-06T13:16:29.210Z",
     "created_at": "2026-10-06T13:16:24.555Z",
-    "updated_at": "2026-10-06T13:16:29.210Z",
-    "error_message": null
+    "updated_at": "2026-10-06T18:13:12.624Z",
+    "error_message": null,
+    "recording_name": "REC0028.WAV",
+    "transcript_preview": "audio number 28 we are recording audio number 28 1 2 3 check 1 2 3 check so this is about wi-fi connected status recording bav 28"
   },
   {
     "id": "697c1fa1-edde-4326-ae4d-72650a5fef9f",
     "recording_key": "Recording%20(21).m4a",
     "file_size": 410011,
     "uploaded_at": "2026-10-04T18:08:27.230Z",
-    "transcription_status": "pending",
-    "transcript": null,
-    "transcript_key": null,
-    "transcribed_at": null,
+    "transcription_status": "completed",
+    "transcript": "Hello there. Good morning. This is Maitreya. We are going to look into the latest podcast by Raj Shamani where he has enlisted discussions topics with Miss Pooja Makhija.",
+    "transcript_key": "Recording%20(21).m4a.txt",
+    "transcribed_at": "2026-10-06T17:56:52.425Z",
     "created_at": "2026-10-06T13:16:24.555Z",
-    "updated_at": "2026-10-06T13:16:24.555Z",
+    "updated_at": "2026-10-06T18:13:12.625Z",
+    "error_message": null,
+    "recording_name": "Recording%20(21).m4a",
+    "transcript_preview": "Hello there. Good morning. This is Maitreya. We are going to look into the latest podcast by Raj Shamani where he has enlisted discussions topics with Miss Pooja Makhija."
+  },
+  {
+    "id": "525cb617-d9df-4d3d-8280-c34cddaade16",
+    "recording_name": "Recording (20).m4a",
+    "recording_key": "Recording (20).m4a",
+    "transcript_preview": "Hello there. Good morning. This is Maitreya. We are going to look into the latest podcast by Raj Shamani where he has enlisted discussions topics with Miss Pooja Makhija.",
+    "file_size": 0,
+    "uploaded_at": "2026-10-06T18:14:28.412Z",
+    "transcription_status": "completed",
+    "transcript": "Hello there. Good morning. This is Maitreya. We are going to look into the latest podcast by Raj Shamani where he has enlisted discussions topics with Miss Pooja Makhija.",
+    "transcript_key": "Recording (20).m4a.txt",
+    "transcribed_at": "2026-10-06T18:14:28.412Z",
+    "created_at": "2026-10-06T18:14:28.412Z",
+    "updated_at": "2026-10-06T18:14:28.412Z",
     "error_message": null
   }
 ]

@@ -4,6 +4,7 @@
  */
 
 import { OpenRouterConfig, Recording } from '../types';
+import { safeJsonParse } from '../utils/api';
 
 export const DEFAULT_OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 export const DEFAULT_GEMINI_MODEL = 'google/gemini-2.5-flash';
@@ -19,6 +20,19 @@ const STORAGE_KEY_KEY = 'openrouter_api_key';
 const STORAGE_KEY_URL = 'openrouter_base_url';
 const STORAGE_KEY_MODEL = 'openrouter_model';
 
+export function normalizeOpenRouterBaseUrl(rawUrl?: string): string {
+  if (!rawUrl || !rawUrl.trim()) return DEFAULT_OPENROUTER_BASE_URL;
+  let clean = rawUrl.trim().replace(/\/+$/, '');
+  // If user entered openrouter.ai without /api/v1
+  if (clean === 'https://openrouter.ai' || clean === 'http://openrouter.ai') {
+    return `${clean}/api/v1`;
+  }
+  if (clean.endsWith('/openrouter.ai/api')) {
+    return `${clean}/v1`;
+  }
+  return clean;
+}
+
 export function getStoredOpenRouterConfig(): OpenRouterConfig {
   if (typeof window === 'undefined') {
     return {
@@ -28,9 +42,10 @@ export function getStoredOpenRouterConfig(): OpenRouterConfig {
     };
   }
 
+  const rawUrl = localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_OPENROUTER_BASE_URL;
   return {
     apiKey: localStorage.getItem(STORAGE_KEY_KEY) || '',
-    baseUrl: localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_OPENROUTER_BASE_URL,
+    baseUrl: normalizeOpenRouterBaseUrl(rawUrl),
     model: localStorage.getItem(STORAGE_KEY_MODEL) || DEFAULT_GEMINI_MODEL,
   };
 }
@@ -42,7 +57,8 @@ export function saveStoredOpenRouterConfig(config: Partial<OpenRouterConfig>) {
     localStorage.setItem(STORAGE_KEY_KEY, config.apiKey.trim());
   }
   if (config.baseUrl !== undefined) {
-    localStorage.setItem(STORAGE_KEY_URL, (config.baseUrl.trim() || DEFAULT_OPENROUTER_BASE_URL).replace(/\/$/, ''));
+    const normalized = normalizeOpenRouterBaseUrl(config.baseUrl);
+    localStorage.setItem(STORAGE_KEY_URL, normalized);
   }
   if (config.model !== undefined) {
     localStorage.setItem(STORAGE_KEY_MODEL, config.model.trim() || DEFAULT_GEMINI_MODEL);
@@ -57,41 +73,41 @@ export async function testOpenRouterConnection(config: OpenRouterConfig): Promis
     throw new Error('Please enter your OpenRouter API key first');
   }
 
-  const endpoint = `${(config.baseUrl || DEFAULT_OPENROUTER_BASE_URL).replace(/\/$/, '')}/chat/completions`;
+  const baseUrl = normalizeOpenRouterBaseUrl(config.baseUrl);
+  const endpoint = `${baseUrl}/chat/completions`;
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey.trim()}`,
-      'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://aistudio.google.com',
-      'X-Title': 'Recording Transcription Dashboard',
-    },
-    body: JSON.stringify({
-      model: config.model || DEFAULT_GEMINI_MODEL,
-      messages: [
-        {
-          role: 'user',
-          content: 'Hello Gemini! Reply with exactly: "OpenRouter Gemini is connected and ready."',
-        },
-      ],
-      max_tokens: 40,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    let parsedMsg = response.statusText;
-    try {
-      const json = JSON.parse(errorText);
-      if (json.error?.message) parsedMsg = json.error.message;
-    } catch {
-      if (errorText) parsedMsg = errorText;
-    }
-    throw new Error(`OpenRouter Error (${response.status}): ${parsedMsg}`);
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey.trim()}`,
+        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://aistudio.google.com',
+        'X-Title': 'Recording Transcription Dashboard',
+      },
+      body: JSON.stringify({
+        model: config.model || DEFAULT_GEMINI_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello Gemini! Reply with exactly: "OpenRouter Gemini is connected and ready."',
+          },
+        ],
+        max_tokens: 40,
+      }),
+    });
+  } catch (netErr: any) {
+    throw new Error(`Failed to reach OpenRouter endpoint (${endpoint}): ${netErr.message || 'Network error'}`);
   }
 
-  const data = await response.json();
+  const data = await safeJsonParse<any>(response);
+
+  if (!response.ok) {
+    const msg = data?.error?.message || data?.message || `HTTP ${response.status} ${response.statusText}`;
+    throw new Error(`OpenRouter Error (${response.status}): ${msg}`);
+  }
+
   const content = data.choices?.[0]?.message?.content?.trim() || 'Connected successfully!';
 
   return {
@@ -177,39 +193,39 @@ ${transcriptsBlock}
 ---
 Please format your response in clean Markdown.`;
 
-  const endpoint = `${(config.baseUrl || DEFAULT_OPENROUTER_BASE_URL).replace(/\/$/, '')}/chat/completions`;
+  const baseUrl = normalizeOpenRouterBaseUrl(config.baseUrl);
+  const endpoint = `${baseUrl}/chat/completions`;
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey.trim()}`,
-      'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://aistudio.google.com',
-      'X-Title': 'Recording Transcription Dashboard',
-    },
-    body: JSON.stringify({
-      model: config.model || DEFAULT_GEMINI_MODEL,
-      messages: [
-        { role: 'system', content: systemMessage },
-        { role: 'user', content: userMessage },
-      ],
-      temperature: 0.3,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey.trim()}`,
+        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://aistudio.google.com',
+        'X-Title': 'Recording Transcription Dashboard',
+      },
+      body: JSON.stringify({
+        model: config.model || DEFAULT_GEMINI_MODEL,
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userMessage },
+        ],
+        temperature: 0.3,
+      }),
+    });
+  } catch (netErr: any) {
+    throw new Error(`Failed to reach OpenRouter endpoint (${endpoint}): ${netErr.message || 'Network error'}`);
+  }
+
+  const data = await safeJsonParse<any>(response);
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => '');
-    let msg = response.statusText;
-    try {
-      const parsed = JSON.parse(errorText);
-      if (parsed.error?.message) msg = parsed.error.message;
-    } catch {
-      if (errorText) msg = errorText;
-    }
+    const msg = data?.error?.message || data?.message || `HTTP ${response.status} ${response.statusText}`;
     throw new Error(`OpenRouter Gemini request failed (${response.status}): ${msg}`);
   }
 
-  const data = await response.json();
   const result = data.choices?.[0]?.message?.content;
 
   if (!result) {
@@ -218,3 +234,4 @@ Please format your response in clean Markdown.`;
 
   return result;
 }
+

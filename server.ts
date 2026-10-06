@@ -109,22 +109,44 @@ app.post('/api/sync', async (req: Request, res: Response) => {
     const syncedRecordings = await syncRecordingsFromWorker(workerFiles);
 
     // Optional: Auto-fetch existing transcripts from Worker for any recordings that have .txt in bucket but not in DB
-    const txtKeys = new Set(
-      workerFiles
-        .filter((f) => f.key.endsWith('.txt'))
-        .map((f) => f.key.slice(0, -4).replace(/^\/+/, ''))
-    );
+    const txtKeys = new Set<string>();
+    workerFiles.forEach((f) => {
+      if (f.key.endsWith('.txt')) {
+        const baseKey = f.key.slice(0, -4);
+        txtKeys.add(baseKey);
+        txtKeys.add(baseKey.replace(/^\/+/, ''));
+        try {
+          const decoded = decodeURIComponent(baseKey);
+          txtKeys.add(decoded);
+          txtKeys.add(decoded.replace(/^\/+/, ''));
+        } catch {
+          // Ignore
+        }
+      }
+    });
 
     for (const rec of syncedRecordings) {
-      if (rec.transcription_status === 'pending' && !rec.transcript && txtKeys.has(rec.recording_key)) {
+      const needsTranscript = !rec.transcript || rec.transcription_status !== 'completed';
+      const hasTxt =
+        txtKeys.has(rec.recording_key) ||
+        txtKeys.has(`/${rec.recording_key}`) ||
+        txtKeys.has(rec.recording_key.replace(/^\/+/, ''));
+
+      if (needsTranscript && hasTxt) {
         try {
           const existingText = await getTranscript(rec.recording_key);
           if (existingText && existingText.trim().length > 0) {
-            await saveTranscript(rec.recording_key, existingText.trim(), `${rec.recording_key}.txt`);
+            const saved = await saveTranscript(
+              rec.recording_key,
+              existingText.trim(),
+              `${rec.recording_key}.txt`
+            );
             rec.transcription_status = 'completed';
             rec.transcript = existingText.trim();
+            rec.transcript_preview = saved.transcript_preview;
             rec.transcript_key = `${rec.recording_key}.txt`;
-            rec.transcribed_at = new Date().toISOString();
+            rec.transcribed_at = saved.transcribed_at || new Date().toISOString();
+            rec.error_message = null;
           }
         } catch {
           // Ignore if transcript not reachable
@@ -253,6 +275,19 @@ app.get('/api/transcript', async (req: Request, res: Response) => {
 app.get('/api/transcript/*', async (req: Request, res: Response) => {
   const filename = req.params[0];
   return handleGetTranscript(filename, res);
+});
+
+// Explicit 404 handler for unmatched API routes (prevents Vite serving HTML for API requests!)
+app.all('/api/*', (req: Request, res: Response) => {
+  res.status(404).json({
+    error: `API route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+// Error handling middleware for API routes
+app.use('/api', (err: any, _req: Request, res: Response, _next: any) => {
+  console.error('[API Error]', err);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
 // Setup Vite or static serving

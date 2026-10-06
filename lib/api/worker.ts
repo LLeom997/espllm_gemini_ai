@@ -4,6 +4,7 @@
  */
 
 import { TranscribeResponse, WorkerFile, WorkerFilesResponse } from '../types';
+import { safeJsonParse } from '../utils/api';
 
 // Centralized Worker URL with fallback to the configured worker
 const getBaseUrl = (): string => {
@@ -48,10 +49,11 @@ export async function getRecordings(): Promise<WorkerFile[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Worker returned HTTP ${response.status} (${response.statusText})`);
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`Worker returned HTTP ${response.status}: ${errorText || response.statusText}`);
     }
 
-    const data: WorkerFilesResponse = await response.json();
+    const data: WorkerFilesResponse = await safeJsonParse<WorkerFilesResponse>(response);
     if (!data || !Array.isArray(data.files)) {
       throw new Error('Invalid response structure from Worker: missing files array');
     }
@@ -64,43 +66,98 @@ export async function getRecordings(): Promise<WorkerFile[]> {
 }
 
 /**
+ * Generates candidate path encodings for a given filename.
+ * In Cloudflare R2, some keys contain leading slashes (e.g. "/Recording%20(20).m4a")
+ * and others do not (e.g. "REC0015.WAV").
+ */
+function getPathCandidates(filename: string): string[] {
+  const candidates: string[] = [];
+  const trimmed = filename.trim();
+
+  const addVariants = (str: string) => {
+    candidates.push(encodeURIComponent(str));
+    if (str.startsWith('/')) {
+      candidates.push(encodeURIComponent(str.slice(1)));
+    } else {
+      candidates.push(encodeURIComponent(`/${str}`));
+    }
+  };
+
+  addVariants(trimmed);
+
+  // In Cloudflare R2, files uploaded with spaces can have keys literally named "/Recording%20(20).m4a"
+  // To reach /transcript/{key} through Cloudflare routing, the % in %20 must be sent as %2520 and / as %2F
+  const baseNoSlash = trimmed.replace(/^\/+/, '');
+  const baseWithSlash = `/${baseNoSlash}`;
+
+  [baseNoSlash, baseWithSlash].forEach((variant) => {
+    // If it has spaces or %20
+    const withPct20 = variant.replace(/ /g, '%20');
+    const withDoublePct20 = withPct20.replace(/%20/g, '%2520');
+    candidates.push(encodeURIComponent(withPct20));
+    candidates.push(encodeURIComponent(withDoublePct20));
+    // Literal path with %2F for leading slash
+    if (variant.startsWith('/')) {
+      candidates.push(`%2F${encodeURIComponent(withPct20.slice(1))}`);
+      candidates.push(`%2F${withDoublePct20.slice(1)}`);
+    }
+  });
+
+  try {
+    const decoded = decodeURIComponent(trimmed);
+    if (decoded !== trimmed) {
+      addVariants(decoded);
+    }
+  } catch {}
+
+  // Deduplicate preserving order
+  return Array.from(new Set(candidates));
+}
+
+/**
  * 2. Transcribe recording
  * POST https://black-haze-8d76.lleom23.workers.dev/transcribe/{filename}
  */
 export async function transcribeRecording(filename: string): Promise<TranscribeResponse> {
-  const sanitized = sanitizeFilename(filename);
-  const encodedName = encodeURIComponent(sanitized);
-  const url = `${WORKER_URL}/transcribe/${encodedName}`;
+  const candidates = getPathCandidates(filename);
+  let lastErrorMsg = 'Worker transcription failed';
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+  for (const encodedName of candidates) {
+    const url = `${WORKER_URL}/transcribe/${encodedName}`;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      throw new Error(
-        `Transcription failed with HTTP ${response.status}: ${errorText || response.statusText}`
-      );
+      if (response.ok) {
+        const data = await safeJsonParse<any>(response);
+        if (data && typeof data.transcript === 'string') {
+          return {
+            filename: data.filename || filename,
+            transcript: data.transcript,
+            transcriptKey: data.transcriptKey || `${filename}.txt`,
+          };
+        }
+      } else {
+        const errText = await response.text().catch(() => '');
+        lastErrorMsg = errText || response.statusText;
+        // If not 404, stop trying candidates
+        if (response.status !== 404) {
+          throw new Error(`Worker returned HTTP ${response.status}: ${lastErrorMsg}`);
+        }
+      }
+    } catch (error: any) {
+      if (error.message?.includes('Worker returned HTTP')) {
+        throw error;
+      }
+      lastErrorMsg = error.message || 'Worker error';
     }
-
-    const data = await response.json();
-    if (!data || typeof data.transcript !== 'string') {
-      throw new Error('Worker response missing expected transcript field');
-    }
-
-    return {
-      filename: data.filename || sanitized,
-      transcript: data.transcript,
-      transcriptKey: data.transcriptKey || `${sanitized}.txt`,
-    };
-  } catch (error: any) {
-    console.error(`[Worker API] Transcription failed for ${sanitized}:`, error);
-    throw new Error(`Transcription failed for ${sanitized}: ${error.message || 'Worker error'}`);
   }
+
+  throw new Error(`Transcription failed for ${filename}: ${lastErrorMsg}`);
 }
 
 /**
@@ -108,26 +165,30 @@ export async function transcribeRecording(filename: string): Promise<TranscribeR
  * GET https://black-haze-8d76.lleom23.workers.dev/transcript/{filename}
  */
 export async function getTranscript(filename: string): Promise<string> {
-  const sanitized = sanitizeFilename(filename);
-  const encodedName = encodeURIComponent(sanitized);
-  const url = `${WORKER_URL}/transcript/${encodedName}`;
+  const candidates = getPathCandidates(filename);
+  let lastError: Error | null = null;
 
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/plain, application/json, */*',
-      },
-    });
+  for (const encodedName of candidates) {
+    const url = `${WORKER_URL}/transcript/${encodedName}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/plain, application/json, */*',
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(`Failed to retrieve transcript: HTTP ${response.status} (${response.statusText})`);
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          return text.trim();
+        }
+      }
+    } catch (error: any) {
+      lastError = error;
     }
-
-    const text = await response.text();
-    return text;
-  } catch (error: any) {
-    console.error(`[Worker API] Failed to retrieve transcript for ${sanitized}:`, error);
-    throw new Error(`Unable to retrieve transcript for ${sanitized}: ${error.message || 'Worker error'}`);
   }
+
+  throw lastError || new Error(`Unable to retrieve transcript for ${filename}`);
 }
+

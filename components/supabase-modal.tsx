@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SupabaseConfigStatus } from '../lib/types';
+import { safeJsonParse } from '../lib/utils/api';
 import {
   Database,
   X,
@@ -79,9 +80,9 @@ export const SupabaseModal: React.FC<SupabaseModalProps> = ({
         body: JSON.stringify({ url: supabaseUrl, key: supabaseKey }),
       });
 
-      const data = await res.json();
+      const data = await safeJsonParse<any>(res);
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to update credentials');
+        throw new Error(data?.error || `Failed to update credentials (HTTP ${res.status})`);
       }
 
       if (onStatusUpdated && data.status) {
