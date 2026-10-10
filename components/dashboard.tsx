@@ -18,6 +18,12 @@ import { AISettingsModal } from './ai-settings-modal';
 import { DailyAnalysis } from './daily-analysis';
 import { safeJsonParse } from '../lib/utils/api';
 import {
+  fetchRecordingsUnified,
+  syncRecordingsUnified,
+  transcribeRecordingUnified,
+  getHealthStatusUnified,
+} from '../lib/client-api';
+import {
   Sparkles,
   Database,
   Radio,
@@ -78,36 +84,30 @@ export const Dashboard: React.FC = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // 1. Fetch current recordings from Supabase API
+  // 1. Fetch current recordings (from server or directly from Supabase/cache)
   const fetchRecordings = useCallback(async () => {
     try {
-      const res = await fetch('/api/recordings');
-      const data = await safeJsonParse<{ recordings?: Recording[] }>(res);
-      if (Array.isArray(data?.recordings)) {
-        setRecordings(data.recordings);
-      }
+      const list = await fetchRecordingsUnified();
+      setRecordings(list);
     } catch (err: any) {
       console.warn('Error fetching recordings:', err);
-      addToast('error', 'Database Error', err.message || 'Unable to load recordings from database.');
+      addToast('error', 'Database Error', err.message || 'Unable to load recordings.');
     }
   }, [addToast]);
 
   // Check health and Supabase status
   const checkHealth = useCallback(async () => {
     try {
-      const res = await fetch('/api/health');
-      if (res.ok) {
-        const data = await safeJsonParse<any>(res);
-        if (data?.supabase) {
-          setSupabaseStatus(data.supabase);
-        }
+      const data = await getHealthStatusUnified();
+      if (data?.supabase) {
+        setSupabaseStatus(data.supabase);
       }
     } catch (err) {
       console.warn('Health check unavailable:', err);
     }
   }, []);
 
-  // 2. Synchronize with Worker
+  // 2. Synchronize with Worker (resilient to static Vercel hosts)
   const handleSync = useCallback(
     async (isInitial = false) => {
       setIsSyncing(true);
@@ -115,12 +115,7 @@ export const Dashboard: React.FC = () => {
       setSyncSuccess(false);
 
       try {
-        const res = await fetch('/api/sync', { method: 'POST' });
-        const data = await safeJsonParse<any>(res);
-
-        if (!res.ok) {
-          throw new Error(data?.error || `Worker sync failed with HTTP ${res.status}`);
-        }
+        const data = await syncRecordingsUnified();
 
         if (data?.recordings && Array.isArray(data.recordings)) {
           setRecordings(data.recordings);
@@ -190,17 +185,7 @@ export const Dashboard: React.FC = () => {
     );
 
     try {
-      const res = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: recordingKey }),
-      });
-
-      const data = await safeJsonParse<any>(res);
-
-      if (!res.ok) {
-        throw new Error(data?.error || `Server returned HTTP ${res.status}`);
-      }
+      const data = await transcribeRecordingUnified(recordingKey);
 
       if (data.recording) {
         // Update row with completed status and transcript

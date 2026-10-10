@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SupabaseConfigStatus } from '../lib/types';
-import { safeJsonParse } from '../lib/utils/api';
+import { updateSupabaseCredentialsUnified } from '../lib/client-api';
 import {
   Database,
   X,
@@ -74,26 +74,17 @@ export const SupabaseModal: React.FC<SupabaseModalProps> = ({
     setSaveMessage(null);
 
     try {
-      const res = await fetch('/api/settings/supabase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: supabaseUrl, key: supabaseKey }),
-      });
+      const newStatus = await updateSupabaseCredentialsUnified(supabaseUrl, supabaseKey);
 
-      const data = await safeJsonParse<any>(res);
-      if (!res.ok) {
-        throw new Error(data?.error || `Failed to update credentials (HTTP ${res.status})`);
-      }
-
-      if (onStatusUpdated && data.status) {
-        onStatusUpdated(data.status);
+      if (onStatusUpdated) {
+        onStatusUpdated(newStatus);
       }
 
       setSaveMessage({
-        success: data.status.isConnected,
-        text: data.status.isConnected
+        success: newStatus.isConnected,
+        text: newStatus.isConnected
           ? 'Successfully connected to Supabase and verified database!'
-          : data.status.error || 'Credentials saved, but verification failed.',
+          : newStatus.error || 'Credentials saved, but verification failed.',
       });
     } catch (err: any) {
       setSaveMessage({ success: false, text: err.message || 'Error connecting to Supabase' });
